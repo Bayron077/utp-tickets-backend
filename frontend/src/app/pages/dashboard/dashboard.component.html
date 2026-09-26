@@ -1,0 +1,80 @@
+<app-topbar subtitle="Dashboard de Métricas" [lastUpdate]="lastUpdate"></app-topbar>
+
+<div class="main">
+
+  <div *ngIf="cargando" class="loading-state"><div class="spinner"></div></div>
+  <div *ngIf="!cargando && error" style="color:#c0392b;padding:24px">⚠️ {{ error }}</div>
+
+  <ng-container *ngIf="!cargando && data">
+    <div class="section-title">Resumen general</div>
+    <div class="kpi-grid">
+      <div class="kpi" [ngClass]="k.cls" *ngFor="let k of kpis">
+        <div class="kpi-label">{{ k.label }}</div>
+        <div class="kpi-value">{{ k.value }}</div>
+        <div class="kpi-sub">{{ k.sub }}</div>
+      </div>
+    </div>
+
+    <div class="section-title">Distribución y comparativa</div>
+    <div class="charts-row">
+      <div class="chart-card">
+        <h3>Distribución por estado</h3>
+        <div class="donut-wrap">
+          <canvas #donutCanvas></canvas>
+          <div class="donut-center">
+            <div class="dc-value">{{ donutTotal }}</div>
+            <div class="dc-label">total</div>
+          </div>
+        </div>
+      </div>
+      <div class="chart-card">
+        <h3>Solicitudes vs Respondidas por facultad</h3>
+        <canvas #barCanvas style="max-height:320px"></canvas>
+      </div>
+    </div>
+
+    <div class="section-title">Detalle por facultad y programa</div>
+    <div class="table-card">
+      <div class="table-card-header">
+        <h3>{{ tabActual === 'facultad' ? 'Por facultad' : 'Por programa' }}</h3>
+        <div class="tab-btns">
+          <button class="tab-btn" [class.active]="tabActual === 'facultad'" (click)="switchTab('facultad')">Por facultad</button>
+          <button class="tab-btn" [class.active]="tabActual === 'programa'" (click)="switchTab('programa')">Por programa</button>
+        </div>
+      </div>
+      <div class="table-scroll">
+        <div *ngIf="!filasTabla.length" style="padding:40px;text-align:center;color:#64748b">Sin datos</div>
+        <table *ngIf="filasTabla.length">
+          <thead>
+            <tr>
+              <th>{{ tabActual === 'facultad' ? 'Facultad' : 'Programa' }}</th>
+              <th *ngIf="tabActual === 'programa'">Facultad</th>
+              <th style="text-align:right">Total</th>
+              <th style="text-align:right">Respondidas</th>
+              <th>Resp. tardías</th>
+              <th>Vencidas</th>
+              <th>% Cumplimiento</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let r of filasTabla">
+              <td class="nombre">{{ r.nombre }}</td>
+              <td class="fac" *ngIf="tabActual === 'programa'">{{ r.facultad }}</td>
+              <td class="num">{{ r.total }}</td>
+              <td class="num">{{ r.completados }}</td>
+              <td><span class="sb tardio">{{ r.tardio }}</span></td>
+              <td><span class="sb vencido">{{ r.vencido }}</span></td>
+              <td>
+                <div class="pbar-wrap">
+                  <div class="pbar"><div class="pbar-fill" [style.width.%]="r.pct" [style.background]="pbarColor(r.pct)"></div></div>
+                  <span class="pbar-pct" [style.color]="pbarColor(r.pct)">{{ r.pct }}%</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </ng-container>
+
+</div>

@@ -1,0 +1,267 @@
+<app-topbar subtitle="Panel de Seguimiento" [lastUpdate]="lastUpdate"></app-topbar>
+
+<div class="main">
+
+  <!-- MÉTRICAS -->
+  <div class="metrics">
+    <div class="metric-card total">
+      <div class="metric-label">Total</div><div class="metric-value">{{ mTotal }}</div><div class="metric-sub">registros</div>
+    </div>
+    <div class="metric-card pendiente">
+      <div class="metric-label">Pendientes</div><div class="metric-value">{{ mPendiente }}</div><div class="metric-sub">sin respuesta</div>
+    </div>
+    <div class="metric-card respondido">
+      <div class="metric-label">Respondidos</div><div class="metric-value">{{ mRespondido }}</div><div class="metric-sub">vía formulario</div>
+    </div>
+    <div class="metric-card gestionado">
+      <div class="metric-label">Gestionados</div><div class="metric-value">{{ mGestionado }}</div><div class="metric-sub">vía sheet</div>
+    </div>
+    <div class="metric-card vencido">
+      <div class="metric-label">Vencidos</div><div class="metric-value">{{ mVencido }}</div><div class="metric-sub">fuera de plazo</div>
+    </div>
+    <div class="metric-card proceso">
+      <div class="metric-label">% Cumplimiento</div><div class="metric-value">{{ mCumplimiento }}%</div><div class="metric-sub">tasa respuesta</div>
+    </div>
+  </div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <span class="search-icon">🔍</span>
+      <input type="text" [(ngModel)]="search" (ngModelChange)="aplicarFiltros()" placeholder="Buscar por programa, ID, responsable...">
+    </div>
+    <select [(ngModel)]="filtroEstado" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todos los estados</option>
+      <option value="Pendiente">Pendiente</option>
+      <option value="Respondido">Respondido</option>
+      <option value="Gestionado">Gestionado</option>
+      <option value="Respondido tardío">Resp. tardía</option>
+      <option value="Vencido">Vencido</option>
+      <option value="En proceso">En proceso</option>
+    </select>
+    <select [(ngModel)]="filtroPrioridad" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todas las prioridades</option>
+      <option value="Alta">Alta</option><option value="Media">Media</option><option value="Baja">Baja</option>
+    </select>
+    <select [(ngModel)]="filtroSolicitante" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todos los solicitantes</option>
+      <option value="Agencia">Agencia</option>
+      <option value="Dirección Posgrados">Dirección Posgrados</option>
+      <option value="Facultad">Facultad</option>
+      <option value="Otro">Otro</option>
+    </select>
+    <select [(ngModel)]="filtroFacultad" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todas las facultades</option>
+      <option *ngFor="let f of facultades" [value]="f">{{ f }}</option>
+    </select>
+    <select [(ngModel)]="filtroAsesor" (ngModelChange)="aplicarFiltros()">
+      <option value="">Todos los asesores</option>
+      <option *ngFor="let a of asesoresFiltro" [value]="a">{{ a }}</option>
+    </select>
+    <button class="btn-refresh" (click)="cargarTickets()">↻ Actualizar</button>
+    <button class="btn-nueva" (click)="abrirNueva()">+ Nueva solicitud</button>
+    <button class="btn-masivo" (click)="abrirMasivo()">📢 Envío masivo</button>
+  </div>
+
+  <!-- TABLA -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <h2>Solicitudes registradas</h2>
+      <span class="count-badge">{{ filtrados.length }} resultado{{ filtrados.length !== 1 ? 's' : '' }}</span>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th></th><th>ID</th><th>Programa</th><th>Facultad</th><th>Tipo</th>
+            <th>Prioridad</th><th>Estado</th><th>Responsable</th>
+            <th>Solicitado por</th><th>Fecha asig.</th><th>Fecha límite</th><th>Días rest.</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="state-row" *ngIf="cargando"><td colspan="12"><div class="spinner"></div><div>Cargando...</div></td></tr>
+          <tr class="state-row" *ngIf="!cargando && error"><td colspan="12" style="color:#c0392b">⚠️ {{ error }}</td></tr>
+          <tr class="state-row" *ngIf="!cargando && !error && !filtrados.length"><td colspan="12">Sin resultados.</td></tr>
+
+          <ng-container *ngFor="let t of filtrados">
+            <tr (click)="toggleDetalle(t.id)" style="cursor:pointer">
+              <td class="toggle-btn">{{ expandedId === t.id ? '▼' : '▶' }}</td>
+              <td class="id-cell">{{ t.id }}</td>
+              <td class="programa-cell">{{ t.programa }}</td>
+              <td>{{ t.facultad || '—' }}</td>
+              <td>{{ t.tipo || '—' }}</td>
+              <td>
+                <span *ngIf="t.prioridad" class="prioridad-badge" [ngClass]="t.prioridad">{{ t.prioridad }}</span>
+                <span *ngIf="!t.prioridad">—</span>
+              </td>
+              <td>
+                <span class="badge" [ngClass]="clasificarEstado(t)">
+                  <span class="badge-dot"></span>{{ etiquetaEstado(clasificarEstado(t), t.estado) }}
+                </span>
+              </td>
+              <td>{{ t.responsable || '—' }}</td>
+              <td>
+                <span class="sol-badge" [ngStyle]="solicitanteStyle(t.solicitadoPor)">
+                  {{ solicitanteIcono(t.solicitadoPor) }} {{ t.solicitadoPor || '—' }}
+                </span>
+              </td>
+              <td style="white-space:nowrap">{{ t.fechaAsignacion || '—' }}</td>
+              <td style="white-space:nowrap">{{ t.fechaLimite || '—' }}</td>
+              <td>
+                <ng-container [ngSwitch]="true">
+                  <span *ngSwitchCase="t.diasRestantes === null" style="color:#94a3b8">—</span>
+                  <span *ngSwitchCase="['respondido','gestionado','tardio'].includes(clasificarEstado(t))" class="dias-cell ok">✓</span>
+                  <span *ngSwitchCase="t.diasRestantes! < 0" class="dias-cell neg">{{ t.diasRestantes }}d</span>
+                  <span *ngSwitchCase="t.diasRestantes! <= 1" class="dias-cell warn">{{ t.diasRestantes }}d</span>
+                  <span *ngSwitchDefault class="dias-cell ok">{{ t.diasRestantes }}d</span>
+                </ng-container>
+              </td>
+            </tr>
+            <tr class="detail-row" [class.open]="expandedId === t.id">
+              <td colspan="12">
+                <div class="detail-inner">
+                  <div class="di"><label>Facultad</label><span>{{ t.facultad || '—' }}</span></div>
+                  <div class="di"><label>Fecha límite</label><span>{{ t.fechaLimite || '—' }}</span></div>
+                  <div class="di full"><label>Detalle</label><span>{{ t.detalle || '—' }}</span></div>
+                  <div class="di full" *ngIf="t.respuesta">
+                    <label>Respuesta</label>
+                    <div class="respuesta-box" [class.gestionado]="clasificarEstado(t) === 'gestionado'">{{ t.respuesta }}</div>
+                  </div>
+                </div>
+              </td>
+            </tr>
+          </ng-container>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<!-- MODAL NUEVA SOLICITUD -->
+<div class="modal-overlay" *ngIf="modalNuevaAbierto">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📋 Nueva solicitud</div>
+        <div class="modal-sub">Complete los campos para registrar la solicitud al director de facultad.</div>
+      </div>
+      <button class="modal-close" (click)="cerrarNueva()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Programa <span class="req">*</span></label>
+        <select [(ngModel)]="nPrograma" (ngModelChange)="onProgramaChange()">
+          <option value="">— Seleccione un programa —</option>
+          <option *ngFor="let p of programasData" [value]="p.programa">{{ p.programa }}</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Tipo de solicitud <span class="req">*</span></label>
+          <select [(ngModel)]="nTipo" (ngModelChange)="onTipoChange()">
+            <option value="">— Seleccione —</option>
+            <option *ngFor="let t of tiposData" [value]="t.tipo">{{ t.tipo }}{{ t.dias ? ' (' + t.dias + ' día' + (t.dias !== 1 ? 's' : '') + ')' : '' }}</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Prioridad <span class="req">*</span></label>
+          <select [(ngModel)]="nPrioridad">
+            <option value="">— Seleccione —</option>
+            <option value="Alta">Alta</option><option value="Media">Media</option><option value="Baja">Baja</option>
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Asesor que radica <span class="req">*</span></label>
+        <select [(ngModel)]="nAsesor">
+          <option value="">— Seleccione asesor —</option>
+          <option *ngFor="let a of asesoresData" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Solicitado por <span class="req">*</span></label>
+          <select [(ngModel)]="nSolicitante">
+            <option value="">— Seleccione —</option>
+            <option value="Agencia">Agencia</option>
+            <option value="Dirección Posgrados">Dirección Posgrados</option>
+            <option value="Facultad">Facultad</option>
+            <option value="Otro">Otro</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Facultad (auto)</label>
+          <input type="text" readonly [value]="nFacultad" placeholder="Se completa al seleccionar">
+        </div>
+      </div>
+      <div class="field">
+        <label>Director responsable (auto)</label>
+        <input type="text" readonly [value]="nDirector" placeholder="Se completa al seleccionar programa">
+      </div>
+      <div class="field">
+        <label>Detalle de la solicitud <span class="req">*</span></label>
+        <textarea [(ngModel)]="nDetalle" maxlength="3000" placeholder="Describa con claridad la información que se requiere..."></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="cerrarNueva()">Cancelar</button>
+        <button class="btn-primary" [disabled]="registrando" (click)="registrarSolicitud()">
+          {{ registrando ? 'Registrando...' : 'Registrar solicitud' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ENVÍO MASIVO -->
+<div class="modal-overlay" *ngIf="modalMasivoAbierto">
+  <div class="modal-card" style="max-width:500px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📢 Envío masivo a todas las facultades</div>
+        <div class="modal-sub">Se creará un ticket y se notificará a cada director (con copia a Dirección de Posgrados, Vicerrectoría Académica y el decano de cada facultad)</div>
+      </div>
+      <button class="modal-close" (click)="cerrarMasivo()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Tipo de solicitud</label>
+        <select [(ngModel)]="masivoTipo" (ngModelChange)="onMasivoTipoChange()">
+          <option value="">Seleccionar tipo...</option>
+          <option *ngFor="let t of tiposData" [value]="t.tipo">{{ t.tipo }}{{ t.dias ? ' (' + t.dias + ' día' + (t.dias !== 1 ? 's' : '') + ')' : '' }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Prioridad</label>
+        <select [(ngModel)]="masivoPrioridad">
+          <option value="Alta">Alta (SLA: 1 día)</option>
+          <option value="Media">Media (SLA: 3 días)</option>
+          <option value="Baja">Baja (SLA: 5 días)</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Solicitado por</label>
+        <select [(ngModel)]="masivoSolicitante">
+          <option value="Agencia">Agencia</option>
+          <option value="Dirección Posgrados">Dirección Posgrados</option>
+          <option value="Facultad">Facultad</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Detalle de la solicitud</label>
+        <textarea [(ngModel)]="masivoDetalle" maxlength="3000" placeholder="Describa qué información necesita de todas las facultades..."></textarea>
+        <div class="char-count">{{ masivoDetalle.length }} / 3000</div>
+      </div>
+      <div class="warn-box">
+        ⚠️ Esta acción creará <strong>un ticket por cada director</strong> y enviará un correo a todos (con las copias configuradas).
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="cerrarMasivo()">Cancelar</button>
+        <button class="btn-primary-blue" [disabled]="enviandoMasivo" (click)="confirmarMasivo()">
+          {{ enviandoMasivo ? 'Enviando...' : '📢 Enviar a todas las facultades' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

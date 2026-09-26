@@ -1,0 +1,100 @@
+<div class="container">
+  <div class="header">
+    <img src="assets/logo-utp.png" alt="UTP" class="header-icon" />
+    <div class="header-text">
+      <h1>Posgrados UTP</h1>
+      <p>Sistema de Gestión de Solicitudes</p>
+    </div>
+  </div>
+
+  <div class="card">
+
+    <!-- Cargando / error de carga -->
+    <div *ngIf="cargando" class="ticket-detail" style="text-align:center;padding:40px 28px">Cargando...</div>
+    <div *ngIf="!cargando && errorCarga" class="ticket-detail">
+      <h3 style="color:#c0392b">Solicitud no encontrada.</h3>
+      <p style="color:#64748b;margin-top:8px">{{ errorCarga }}</p>
+    </div>
+
+    <ng-container *ngIf="!cargando && ticket && !errorEnvio && !estadoFinal">
+      <!-- Estado -->
+      <div class="status-bar" [ngClass]="esVencido ? 'vencido' : (ticket.estado.toLowerCase().includes('respond') ? 'respondido' : 'pendiente')">
+        <div class="dot"></div>
+        <span>{{ ticket.estado }}</span>
+      </div>
+
+      <!-- Banner vencido -->
+      <div class="vencido-banner" *ngIf="esVencido && !yaRespondido">
+        <div class="icon">⚠️</div>
+        <div class="text">
+          <strong>Esta solicitud está vencida.</strong> Puede responder igualmente, pero su respuesta
+          quedará registrada como <strong>"Respondido tardío"</strong> en el sistema, quedando
+          constancia de que se respondió fuera del plazo acordado.
+        </div>
+      </div>
+
+      <!-- Detalle -->
+      <div class="ticket-detail">
+        <div class="ticket-id">{{ ticket.id }}</div>
+        <h2>{{ ticket.programa }}</h2>
+        <div class="meta-grid">
+          <div class="meta-item"><label>Facultad</label><span>{{ ticket.facultad || '—' }}</span></div>
+          <div class="meta-item"><label>Tipo de solicitud</label><span>{{ ticket.tipo || '—' }}</span></div>
+          <div class="meta-item"><label>Asesor</label><span>{{ ticket.asesor || '—' }}</span></div>
+          <div class="meta-item"><label>Responsable</label><span>{{ ticket.responsable || '—' }}</span></div>
+          <div class="meta-item"><label>Prioridad</label><span><span class="prioridad-badge" [ngClass]="ticket.prioridad">{{ ticket.prioridad || '—' }}</span></span></div>
+          <div class="meta-item"><label>Fecha asignación</label><span>{{ ticket.fechaAsignacion || '—' }}</span></div>
+          <div class="meta-item"><label>Fecha límite</label><span>{{ ticket.fechaLimite || '—' }}</span></div>
+        </div>
+        <div class="detalle-box">
+          <label>Información solicitada</label>
+          <p>{{ ticket.detalle || '—' }}</p>
+        </div>
+      </div>
+
+      <hr class="divider">
+
+      <!-- Ya respondido -->
+      <div class="form-section" *ngIf="yaRespondido" style="text-align:center;padding:8px 28px 24px">
+        <div style="font-size:40px;margin-bottom:12px">{{ esTardioPrevio ? '📋' : '✅' }}</div>
+        <h3 [style.color]="esTardioPrevio ? '#d97706' : '#1a7a4a'" style="font-size:16px">
+          {{ esTardioPrevio ? 'Respondido tardíamente' : 'Esta solicitud ya fue respondida' }}
+        </h3>
+        <p *ngIf="ticket.respuestaPrevia" style="color:#64748b;font-size:13px;margin-top:8px;line-height:1.5">{{ ticket.respuestaPrevia }}</p>
+      </div>
+
+      <!-- Formulario -->
+      <div class="form-section" *ngIf="!yaRespondido">
+        <h3>{{ esVencido ? '✍️ Responder (fuera de plazo)' : '✍️ Su respuesta' }}</h3>
+        <p>{{ esVencido ? 'Su respuesta quedará registrada como "Respondido tardío". Esto queda como constancia en el sistema.' : 'Ingrese la información solicitada. Al enviar, el estado cambiará automáticamente.' }}</p>
+        <textarea [(ngModel)]="respuesta" maxlength="2000" placeholder="Escriba aquí su respuesta con toda la información necesaria..."></textarea>
+        <div class="char-count">{{ respuesta.length }} / 2000</div>
+        <button class="btn-submit" [ngClass]="esVencido ? 'tardio' : 'normal'" [disabled]="enviando" (click)="enviarRespuesta()">
+          {{ enviando ? 'Enviando...' : 'Enviar respuesta' }}
+        </button>
+      </div>
+    </ng-container>
+
+    <!-- Error al enviar -->
+    <div class="result-panel error" style="display:block" *ngIf="errorEnvio">
+      <div class="result-icon">⚠️</div>
+      <h3>Ocurrió un error</h3>
+      <p>{{ errorEnvio }}</p>
+    </div>
+
+    <!-- Éxito -->
+    <div class="result-panel success" style="display:block" *ngIf="estadoFinal === 'exito'">
+      <div class="result-icon">✅</div>
+      <h3>¡Respuesta registrada!</h3>
+      <p>El estado del ticket ha sido actualizado a <strong>Respondido</strong>.<br>Los asesores ya pueden ver su respuesta.</p>
+    </div>
+
+    <!-- Éxito tardío -->
+    <div class="result-panel tardio" style="display:block" *ngIf="estadoFinal === 'tardio'">
+      <div class="result-icon">📋</div>
+      <h3>Respuesta registrada con constancia</h3>
+      <p>Su respuesta fue guardada. El estado quedó como <strong>"Respondido tardío"</strong> porque se recibió fuera del plazo acordado. Esto queda registrado en el sistema.</p>
+    </div>
+
+  </div>
+</div>

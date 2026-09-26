@@ -1,0 +1,105 @@
+// ============================================================
+// schema.prisma — Sistema de Tickets Posgrados UTP (v1.0 web)
+// Modelo basado 1:1 en las columnas de REGISTRO_SLA, MAESTRO_DIRECTORES
+// y LISTAS del Codigo.gs original.
+// ============================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Equivale a la hoja REGISTRO_SLA
+model Ticket {
+  id                       String    @id // Ej: UTP-2026-0075
+  fechaAsignacion          DateTime  @map("fecha_asignacion")
+  programa                 String
+  facultad                 String
+  tipo                     String
+  prioridad                String // Alta | Media | Baja
+  estado                   String    @default("Pendiente")
+  // Pendiente | En proceso | Respondido | Gestionado | Respondido tardío | Vencido
+  responsable              String // nombre del director
+  slaBaseDias              Int       @map("sla_base_dias")
+  ajustePrioridad          Int       @default(0) @map("ajuste_prioridad")
+  slaAplicadoDias          Int       @map("sla_aplicado_dias")
+  fechaLimite              DateTime  @map("fecha_limite")
+  fechaRespuesta           DateTime? @map("fecha_respuesta")
+  detalle                  String    @db.Text
+  respuesta                String?   @db.Text
+  solicitadoPor            String?   @map("solicitado_por") // Agencia | Dirección Posgrados | Facultad | Otro
+  correoResponsable        String    @map("correo_responsable")
+  asesor                   String?
+
+  alertaInicialEnviada     Boolean   @default(false) @map("alerta_inicial_enviada")
+  fechaAlertaInicial       DateTime? @map("fecha_alerta_inicial")
+  alertaPreventivaEnviada  Boolean   @default(false) @map("alerta_preventiva_enviada")
+  fechaAlertaPreventiva    DateTime? @map("fecha_alerta_preventiva")
+  alertaVencimientoEnviada Boolean   @default(false) @map("alerta_vencimiento_enviada")
+  fechaAlertaVencimiento   DateTime? @map("fecha_alerta_vencimiento")
+  alertaVencidoEnviada     Boolean   @default(false) @map("alerta_vencido_enviada")
+  fechaAlertaVencido       DateTime? @map("fecha_alerta_vencido")
+
+  duplicado                Boolean   @default(false)
+  obsSistema                String?  @map("obs_sistema")
+
+  createdAt                DateTime  @default(now()) @map("created_at")
+  updatedAt                DateTime  @updatedAt @map("updated_at")
+
+  @@map("tickets")
+  @@index([facultad])
+  @@index([programa])
+  @@index([estado])
+}
+
+// Equivale a la hoja MAESTRO_DIRECTORES (facultad | programa | responsable | correo)
+model Director {
+  id          Int    @id @default(autoincrement())
+  facultad    String
+  programa    String @unique
+  responsable String
+  correo      String
+
+  @@map("directores")
+}
+
+// Equivale a la hoja LISTAS, columnas Tipo/Días/Mensaje predeterminado
+model TipoSolicitud {
+  id      Int     @id @default(autoincrement())
+  tipo    String  @unique
+  dias    Int?
+  mensaje String? @db.Text
+
+  @@map("tipos_solicitud")
+}
+
+// Equivale a la hoja LISTAS columna Asesores
+model Asesor {
+  id     Int    @id @default(autoincrement())
+  nombre String @unique
+
+  @@map("asesores")
+}
+
+// [NUEVO] Reemplaza la necesidad de un dropdown manual: mapea Facultad -> Decano
+// para la copia (CC) variable del envío masivo / individual.
+model Decano {
+  id       Int    @id @default(autoincrement())
+  facultad String @unique
+  correo   String
+  nombre   String?
+
+  @@map("decanos")
+}
+
+// Configuración editable sin tocar código (reemplaza las constantes CC_COORDINADOR, etc.)
+model Config {
+  clave String @id
+  valor String
+
+  @@map("config")
+}
