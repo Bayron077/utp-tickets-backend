@@ -21,6 +21,12 @@ export const config = {
     from: process.env.SMTP_FROM || process.env.SMTP_USER || "",
   },
 
+  // Envío de correo vía API HTTP de Brevo (en vez de SMTP directo).
+  // Render bloquea el tráfico saliente a los puertos SMTP (25/465/587) en sus
+  // servicios web gratuitos, así que el envío por SMTP nunca completa ahí.
+  // La API de Brevo viaja por HTTPS (puerto 443), que no está bloqueado.
+  brevoApiKey: process.env.BREVO_API_KEY || "",
+
   // Equivalentes a las constantes del Codigo.gs original.
   // ccFijos: SIEMPRE van en copia, sin importar la facultad (Director de Posgrados + Vicerrectoría Académica)
   ccFijos: [

@@ -1,13 +1,57 @@
-import nodemailer from "nodemailer";
 import { config } from "./config";
 import { prisma } from "./db";
 
-const transporter = nodemailer.createTransport({
-  host: config.smtp.host,
-  port: config.smtp.port,
-  secure: config.smtp.secure,
-  auth: { user: config.smtp.user, pass: config.smtp.pass },
-});
+// ============================================================
+// [MAIL] Envío vía API HTTP de Brevo — reemplaza el envío por SMTP directo.
+// Render bloquea el tráfico saliente a los puertos SMTP (25/465/587) en sus
+// servicios web gratuitos, por lo que nodemailer + Gmail SMTP nunca llega a
+// completar la conexión ahí (se queda colgado indefinidamente). La API REST
+// de Brevo se llama por HTTPS (puerto 443), que sí está permitido.
+// Requiere la variable de entorno BREVO_API_KEY y que el correo remitente
+// (SMTP_FROM, o SMTP_USER si SMTP_FROM no está definido) esté verificado
+// como "sender" en la cuenta de Brevo (Senders, Domains & Dedicated IPs).
+// ============================================================
+function parsearRemitente(raw: string): { name?: string; email: string } {
+  const m = raw.match(/^(.*)<(.+)>$/);
+  if (m) {
+    const name = m[1].trim().replace(/^"|"$/g, "");
+    const email = m[2].trim();
+    return name ? { name, email } : { email };
+  }
+  return { email: raw.trim() };
+}
+
+async function enviarViaBrevo(params: { to: string; cc: string[]; subject: string; html: string }): Promise<void> {
+  if (!config.brevoApiKey) {
+    throw new Error("Falta la variable de entorno BREVO_API_KEY (revisa tu .env / Render).");
+  }
+
+  const sender = parsearRemitente(config.smtp.from);
+  const body: Record<string, unknown> = {
+    sender,
+    to: [{ email: params.to }],
+    subject: params.subject,
+    htmlContent: params.html,
+  };
+  if (params.cc.length > 0) {
+    body.cc = params.cc.map((email) => ({ email }));
+  }
+
+  const resp = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      accept: "application/json",
+      "content-type": "application/json",
+      "api-key": config.brevoApiKey,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!resp.ok) {
+    const texto = await resp.text().catch(() => "");
+    throw new Error(`Brevo respondió ${resp.status}: ${texto || resp.statusText}`);
+  }
+}
 
 // ============================================================
 // [CC] Resolución de copias — puerto de tu requerimiento nuevo:
@@ -146,10 +190,9 @@ export async function enviarCorreoTicket(p: EnviarCorreoParams): Promise<void> {
     vencido:     `🔴 [Posgrados UTP] Solicitud VENCIDA – ${p.programa}`,
   };
 
-  await transporter.sendMail({
-    from: config.smtp.from,
+  await enviarViaBrevo({
     to: p.to,
-    cc: cc.join(","),
+    cc,
     subject: asuntos[p.tipo],
     html: buildEmail(p),
   });
