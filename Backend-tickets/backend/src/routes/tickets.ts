@@ -1,5 +1,6 @@
 import { Router } from "express";
-import type { Ticket } from "@prisma/client";
+import ExcelJS from "exceljs";
+import type { Prisma, Ticket } from "@prisma/client";
 import { prisma } from "../db";
 import { config } from "../config";
 import { formatearFecha, timestampLegible, hoyMedianoche, diferenciaDias } from "../utils/dates";
@@ -34,6 +35,86 @@ router.get("/", async (_req, res) => {
     asesor: t.asesor || "",
     respuesta: t.respuesta || "",
   })));
+});
+
+// ============================================================
+// GET /api/tickets/export — descarga los registros en Excel (.xlsx)
+// query (todos opcionales): asesor, facultad, programa, estado
+// Debe ir ANTES de /:id para que "export" no se tome como un ID.
+// ============================================================
+router.get("/export", async (req, res) => {
+  try {
+    const filtro = (k: string) => (typeof req.query[k] === "string" && req.query[k] ? String(req.query[k]) : undefined);
+    const where: Prisma.TicketWhereInput = {
+      asesor: filtro("asesor"),
+      facultad: filtro("facultad"),
+      programa: filtro("programa"),
+      estado: filtro("estado"),
+    };
+
+    const tickets = await prisma.ticket.findMany({ where, orderBy: { fechaAsignacion: "desc" } });
+    const hoy = hoyMedianoche();
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "Sistema de Tickets Posgrados UTP";
+    const ws = wb.addWorksheet("Registros", { views: [{ state: "frozen", ySplit: 1 }] });
+
+    ws.columns = [
+      { header: "ID", key: "id", width: 16 },
+      { header: "Fecha asignación", key: "fechaAsignacion", width: 16 },
+      { header: "Programa", key: "programa", width: 40 },
+      { header: "Facultad", key: "facultad", width: 30 },
+      { header: "Tipo", key: "tipo", width: 28 },
+      { header: "Prioridad", key: "prioridad", width: 11 },
+      { header: "Estado", key: "estado", width: 18 },
+      { header: "Responsable", key: "responsable", width: 30 },
+      { header: "Correo responsable", key: "correoResponsable", width: 32 },
+      { header: "Asesor", key: "asesor", width: 24 },
+      { header: "Solicitado por", key: "solicitadoPor", width: 20 },
+      { header: "SLA (días)", key: "slaAplicadoDias", width: 11 },
+      { header: "Fecha límite", key: "fechaLimite", width: 14 },
+      { header: "Días restantes", key: "diasRestantes", width: 14 },
+      { header: "Fecha respuesta", key: "fechaRespuesta", width: 16 },
+      { header: "Detalle", key: "detalle", width: 60 },
+      { header: "Respuesta", key: "respuesta", width: 60 },
+    ];
+
+    for (const t of tickets) {
+      ws.addRow({
+        id: t.id,
+        fechaAsignacion: formatearFecha(t.fechaAsignacion),
+        programa: t.programa,
+        facultad: t.facultad,
+        tipo: t.tipo,
+        prioridad: t.prioridad,
+        estado: t.estado,
+        responsable: t.responsable,
+        correoResponsable: t.correoResponsable,
+        asesor: t.asesor || "",
+        solicitadoPor: t.solicitadoPor || "",
+        slaAplicadoDias: t.slaAplicadoDias,
+        fechaLimite: formatearFecha(t.fechaLimite),
+        diasRestantes: diferenciaDias(t.fechaLimite, hoy),
+        fechaRespuesta: formatearFecha(t.fechaRespuesta),
+        detalle: t.detalle,
+        respuesta: t.respuesta || "",
+      });
+    }
+
+    const header = ws.getRow(1);
+    header.font = { bold: true, color: { argb: "FFFFFFFF" } };
+    header.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1A3A6B" } };
+    header.alignment = { vertical: "middle" };
+    ws.autoFilter = { from: { row: 1, column: 1 }, to: { row: 1, column: ws.columns.length } };
+
+    const nombre = `registros_tickets_${formatearFecha(new Date()).split("/").reverse().join("-")}.xlsx`;
+    res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+    res.setHeader("Content-Disposition", `attachment; filename="${nombre}"`);
+    await wb.xlsx.write(res);
+    res.end();
+  } catch (err: any) {
+    res.status(500).json({ exito: false, mensaje: "Error al exportar: " + err.message });
+  }
 });
 
 // ============================================================
