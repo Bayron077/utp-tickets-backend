@@ -54,6 +54,11 @@ export class PanelComponent implements OnInit {
   masivoTipo = ''; masivoPrioridad = 'Media'; masivoSolicitante = 'Agencia'; masivoDetalle = '';
   enviandoMasivo = false;
 
+  // modal exportar Excel
+  modalExportarAbierto = false;
+  expAsesor = ''; expFacultad = ''; expPrograma = ''; expEstado = '';
+  exportando = false;
+
   constructor(private ticketService: TicketService) {}
 
   ngOnInit(): void {
@@ -214,6 +219,52 @@ export class PanelComponent implements OnInit {
       error: (e) => {
         this.registrando = false;
         alert('Error: ' + (e?.error?.mensaje || e.message));
+      },
+    });
+  }
+
+  // ---- Exportar Excel ----
+  abrirExportar(): void {
+    this.cargarCatalogosSiHaceFalta();
+    this.modalExportarAbierto = true;
+  }
+
+  cerrarExportar(): void {
+    this.modalExportarAbierto = false;
+    this.expAsesor = this.expFacultad = this.expPrograma = this.expEstado = '';
+    this.exportando = false;
+  }
+
+  // programas del catálogo, limitados a la facultad elegida (si hay una)
+  get programasExportar(): Programa[] {
+    return this.programasData.filter(p => !this.expFacultad || p.facultad === this.expFacultad);
+  }
+
+  get facultadesExportar(): string[] {
+    return [...new Set(this.programasData.map(p => p.facultad).filter(Boolean))].sort();
+  }
+
+  onExpFacultadChange(): void {
+    if (this.expPrograma && !this.programasExportar.some(p => p.programa === this.expPrograma)) this.expPrograma = '';
+  }
+
+  descargarExcel(): void {
+    this.exportando = true;
+    this.ticketService.exportarExcel({
+      asesor: this.expAsesor, facultad: this.expFacultad, programa: this.expPrograma, estado: this.expEstado,
+    }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `registros_tickets_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.cerrarExportar();
+      },
+      error: () => {
+        this.exportando = false;
+        alert('Error al generar el archivo Excel. Intenta de nuevo.');
       },
     });
   }

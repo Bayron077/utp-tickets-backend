@@ -61,6 +61,7 @@
     <button class="btn-refresh" (click)="cargarTickets()">↻ Actualizar</button>
     <button class="btn-nueva" (click)="abrirNueva()">+ Nueva solicitud</button>
     <button class="btn-masivo" (click)="abrirMasivo()">📢 Envío masivo</button>
+    <button class="btn-exportar" (click)="abrirExportar()">📥 Exportar Excel</button>
   </div>
 
   <!-- TABLA -->
@@ -207,6 +208,60 @@
         <button class="btn-secondary" (click)="cerrarNueva()">Cancelar</button>
         <button class="btn-primary" [disabled]="registrando" (click)="registrarSolicitud()">
           {{ registrando ? 'Registrando...' : 'Registrar solicitud' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EXPORTAR EXCEL -->
+<div class="modal-overlay" *ngIf="modalExportarAbierto">
+  <div class="modal-card" style="max-width:500px">
+    <div class="modal-header">
+      <div>
+        <div class="modal-title">📥 Exportar registros a Excel</div>
+        <div class="modal-sub">Deja un filtro en "Todos" para no filtrar por ese campo.</div>
+      </div>
+      <button class="modal-close" (click)="cerrarExportar()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Asesor</label>
+        <select [(ngModel)]="expAsesor">
+          <option value="">Todos los asesores</option>
+          <option *ngFor="let a of asesoresData" [value]="a">{{ a }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Facultad</label>
+        <select [(ngModel)]="expFacultad" (ngModelChange)="onExpFacultadChange()">
+          <option value="">Todas las facultades</option>
+          <option *ngFor="let f of facultadesExportar" [value]="f">{{ f }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Programa</label>
+        <select [(ngModel)]="expPrograma">
+          <option value="">Todos los programas</option>
+          <option *ngFor="let p of programasExportar" [value]="p.programa">{{ p.programa }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Estado</label>
+        <select [(ngModel)]="expEstado">
+          <option value="">Todos los estados</option>
+          <option value="Pendiente">Pendiente</option>
+          <option value="En proceso">En proceso</option>
+          <option value="Respondido">Respondido</option>
+          <option value="Gestionado">Gestionado</option>
+          <option value="Respondido tardío">Respondido tardío</option>
+          <option value="Vencido">Vencido</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" (click)="cerrarExportar()">Cancelar</button>
+        <button class="btn-primary" [disabled]="exportando" (click)="descargarExcel()">
+          {{ exportando ? 'Generando...' : '📥 Descargar Excel' }}
         </button>
       </div>
     </div>

@@ -46,6 +46,8 @@ select { padding:9px 12px; border:1.5px solid var(--border); border-radius:7px; 
 .btn-refresh:hover { background:var(--blue-lt); }
 .btn-masivo  { padding:9px 16px; background:#1a3a6b; border:1.5px solid #2962c5; color:#fff; border-radius:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:background .2s; }
 .btn-masivo:hover { background:#2962c5; }
+.btn-exportar { padding:9px 16px; background:#fff; border:1.5px solid #1a7a4a; color:#1a7a4a; border-radius:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:background .2s; }
+.btn-exportar:hover { background:#f0fdf4; }
 .btn-nueva   { padding:9px 16px; background:#1a7a4a; color:#fff; border:none; border-radius:7px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:700; cursor:pointer; transition:background .2s; }
 .btn-nueva:hover { background:#15803d; }
 

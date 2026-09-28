@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../environments/environment';
 import { MetricasDashboard, Programa, RespuestaApi, Ticket, TicketDetalle, TipoSolicitud } from '../models/ticket.model';
@@ -42,6 +42,13 @@ export class TicketService {
   // equivale a procesarRespuesta()
   procesarRespuesta(id: string, respuesta: string): Observable<RespuestaApi> {
     return this.http.post<RespuestaApi>(`${this.base}/tickets/${encodeURIComponent(id)}/respuesta`, { respuesta });
+  }
+
+  // descarga los registros en Excel; los filtros vacíos se ignoran
+  exportarExcel(filtros: { asesor?: string; facultad?: string; programa?: string; estado?: string }): Observable<Blob> {
+    let params = new HttpParams();
+    for (const [k, v] of Object.entries(filtros)) if (v) params = params.set(k, v);
+    return this.http.get(`${this.base}/tickets/export`, { params, responseType: 'blob' });
   }
 
   // equivale a obtenerMetricasDashboard()
