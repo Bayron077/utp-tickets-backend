@@ -35,7 +35,7 @@ export class ResponderComponent implements OnInit {
   constructor(private route: ActivatedRoute, private ticketService: TicketService) {}
 
   get esInscripciones(): boolean {
-    return (this.ticket?.tipo || '').trim().toLowerCase() === 'estado inscripciones';
+    return (this.ticket?.tipo || '').trim().toLowerCase() === 'fechas inscripción';
   }
 
   private formatearFechaInput(valor: string): string {
