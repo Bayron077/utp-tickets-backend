@@ -45,7 +45,7 @@ export class TicketService {
   }
 
   // descarga los registros en Excel; los filtros vacíos se ignoran
-  exportarExcel(filtros: { asesor?: string; facultad?: string; programa?: string; estado?: string }): Observable<Blob> {
+  exportarExcel(filtros: { asesor?: string; facultad?: string; programa?: string; estado?: string; mes?: string; anio?: string }): Observable<Blob> {
     let params = new HttpParams();
     for (const [k, v] of Object.entries(filtros)) if (v) params = params.set(k, v);
     return this.http.get(`${this.base}/tickets/export`, { params, responseType: 'blob' });

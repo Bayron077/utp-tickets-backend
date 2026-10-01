@@ -258,6 +258,19 @@
           <option value="Vencido">Vencido</option>
         </select>
       </div>
+      <div class="field">
+        <label>Mes (fecha de asignación)</label>
+        <select [(ngModel)]="expMes">
+          <option value="">Todos los meses</option>
+          <option *ngFor="let m of meses" [value]="m.valor">{{ m.nombre }}</option>
+        </select>
+      </div>
+      <div class="field" *ngIf="expMes">
+        <label>Año</label>
+        <select [(ngModel)]="expAnio">
+          <option *ngFor="let a of aniosExportar" [value]="a">{{ a }}</option>
+        </select>
+      </div>
       <div class="modal-actions">
         <button class="btn-secondary" (click)="cerrarExportar()">Cancelar</button>
         <button class="btn-primary" [disabled]="exportando" (click)="descargarExcel()">

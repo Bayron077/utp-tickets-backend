@@ -39,7 +39,8 @@ router.get("/", async (_req, res) => {
 
 // ============================================================
 // GET /api/tickets/export — descarga los registros en Excel (.xlsx)
-// query (todos opcionales): asesor, facultad, programa, estado
+// query (todos opcionales): asesor, facultad, programa, estado, mes (1-12), anio
+// mes se filtra sobre fecha_asignacion; si se envía mes sin anio, se usa el año actual.
 // Debe ir ANTES de /:id para que "export" no se tome como un ID.
 // ============================================================
 router.get("/export", async (req, res) => {
@@ -51,6 +52,18 @@ router.get("/export", async (req, res) => {
       programa: filtro("programa"),
       estado: filtro("estado"),
     };
+
+    const mesStr = filtro("mes");
+    if (mesStr) {
+      const mes = parseInt(mesStr, 10);
+      const anio = parseInt(filtro("anio") || String(new Date().getFullYear()), 10);
+      if (mes >= 1 && mes <= 12 && !isNaN(anio)) {
+        where.fechaAsignacion = {
+          gte: new Date(anio, mes - 1, 1),
+          lt: new Date(anio, mes, 1),
+        };
+      }
+    }
 
     const tickets = await prisma.ticket.findMany({ where, orderBy: { fechaAsignacion: "desc" } });
     const hoy = hoyMedianoche();

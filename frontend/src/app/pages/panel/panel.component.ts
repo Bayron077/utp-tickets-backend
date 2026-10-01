@@ -56,8 +56,21 @@ export class PanelComponent implements OnInit {
 
   // modal exportar Excel
   modalExportarAbierto = false;
-  expAsesor = ''; expFacultad = ''; expPrograma = ''; expEstado = '';
+  expAsesor = ''; expFacultad = ''; expPrograma = ''; expEstado = ''; expMes = '';
+  expAnio = String(new Date().getFullYear());
   exportando = false;
+
+  readonly meses = [
+    { valor: '1', nombre: 'Enero' }, { valor: '2', nombre: 'Febrero' }, { valor: '3', nombre: 'Marzo' },
+    { valor: '4', nombre: 'Abril' }, { valor: '5', nombre: 'Mayo' }, { valor: '6', nombre: 'Junio' },
+    { valor: '7', nombre: 'Julio' }, { valor: '8', nombre: 'Agosto' }, { valor: '9', nombre: 'Septiembre' },
+    { valor: '10', nombre: 'Octubre' }, { valor: '11', nombre: 'Noviembre' }, { valor: '12', nombre: 'Diciembre' },
+  ];
+
+  get aniosExportar(): number[] {
+    const actual = new Date().getFullYear();
+    return [actual, actual - 1, actual - 2, actual - 3, actual - 4];
+  }
 
   constructor(private ticketService: TicketService) {}
 
@@ -231,7 +244,8 @@ export class PanelComponent implements OnInit {
 
   cerrarExportar(): void {
     this.modalExportarAbierto = false;
-    this.expAsesor = this.expFacultad = this.expPrograma = this.expEstado = '';
+    this.expAsesor = this.expFacultad = this.expPrograma = this.expEstado = this.expMes = '';
+    this.expAnio = String(new Date().getFullYear());
     this.exportando = false;
   }
 
@@ -252,6 +266,7 @@ export class PanelComponent implements OnInit {
     this.exportando = true;
     this.ticketService.exportarExcel({
       asesor: this.expAsesor, facultad: this.expFacultad, programa: this.expPrograma, estado: this.expEstado,
+      mes: this.expMes, anio: this.expMes ? this.expAnio : '',
     }).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);

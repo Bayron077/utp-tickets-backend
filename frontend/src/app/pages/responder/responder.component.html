@@ -67,8 +67,33 @@
       <div class="form-section" *ngIf="!yaRespondido">
         <h3>{{ esVencido ? '✍️ Responder (fuera de plazo)' : '✍️ Su respuesta' }}</h3>
         <p>{{ esVencido ? 'Su respuesta quedará registrada como "Respondido tardío". Esto queda como constancia en el sistema.' : 'Ingrese la información solicitada. Al enviar, el estado cambiará automáticamente.' }}</p>
-        <textarea [(ngModel)]="respuesta" maxlength="2000" placeholder="Escriba aquí su respuesta con toda la información necesaria..."></textarea>
-        <div class="char-count">{{ respuesta.length }} / 2000</div>
+
+        <!-- Formulario estructurado: Estado inscripciones -->
+        <ng-container *ngIf="esInscripciones">
+          <div class="campo-grupo">
+            <label>Tipo de fecha</label>
+            <select [(ngModel)]="tipoFecha">
+              <option value="" disabled selected>Seleccione una opción...</option>
+              <option value="Fecha tentativa">Fecha tentativa</option>
+              <option value="Fecha de cierre">Fecha de cierre</option>
+            </select>
+          </div>
+          <div class="campo-grupo">
+            <label>Fecha de inicio</label>
+            <input type="date" [(ngModel)]="fechaInicio" />
+          </div>
+          <div class="campo-grupo">
+            <label>Fecha de cierre</label>
+            <input type="date" [(ngModel)]="fechaFin" />
+          </div>
+        </ng-container>
+
+        <!-- Formulario de texto libre: resto de tipos de solicitud -->
+        <ng-container *ngIf="!esInscripciones">
+          <textarea [(ngModel)]="respuesta" maxlength="2000" placeholder="Escriba aquí su respuesta con toda la información necesaria..."></textarea>
+          <div class="char-count">{{ respuesta.length }} / 2000</div>
+        </ng-container>
+
         <button class="btn-submit" [ngClass]="esVencido ? 'tardio' : 'normal'" [disabled]="enviando" (click)="enviarRespuesta()">
           {{ enviando ? 'Enviando...' : 'Enviar respuesta' }}
         </button>
