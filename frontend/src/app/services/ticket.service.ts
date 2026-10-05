@@ -33,8 +33,10 @@ export class TicketService {
   }
 
   // equivale a envioMasivo()
+  // programas: lista de nombres de programa destino; si se omite o viene vacía, se envía a todos.
   envioMasivo(payload: {
     tipo: string; detalle: string; prioridad: string; solicitadoPor: string; slaBaseDias: number | null;
+    programas?: string[];
   }): Observable<RespuestaApi> {
     return this.http.post<RespuestaApi>(`${this.base}/tickets/masivo`, payload);
   }

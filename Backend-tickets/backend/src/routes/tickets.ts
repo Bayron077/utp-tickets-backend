@@ -206,16 +206,23 @@ router.post("/", async (req, res) => {
 // [CC] cada correo ya incluye automáticamente: CC_COORDINADOR + los 2 fijos
 // (Director de Posgrados, Vicerrectoría Académica) + el decano de CADA facultad
 // (se resuelve solo, dentro de enviarCorreoTicket -> construirCC)
-// body: { tipo, detalle, prioridad, solicitadoPor?, slaBaseDias? }
+// body: { tipo, detalle, prioridad, solicitadoPor?, slaBaseDias?, programas? }
+// programas: string[] opcional con los nombres de programa destino.
+// Si se omite o viene vacío, se envía a TODOS los programas registrados.
 // ============================================================
 router.post("/masivo", async (req, res) => {
   try {
-    const { tipo, detalle, prioridad, solicitadoPor, slaBaseDias } = req.body || {};
+    const { tipo, detalle, prioridad, solicitadoPor, slaBaseDias, programas } = req.body || {};
     if (!tipo || !detalle || !prioridad) {
       return res.status(400).json({ exito: false, mensaje: "Tipo, detalle y prioridad son obligatorios." });
     }
+    if (programas !== undefined && !Array.isArray(programas)) {
+      return res.status(400).json({ exito: false, mensaje: "programas debe ser un arreglo de nombres de programa." });
+    }
 
-    const directores = await prisma.director.findMany();
+    const directores = Array.isArray(programas) && programas.length > 0
+      ? await prisma.director.findMany({ where: { programa: { in: programas } } })
+      : await prisma.director.findMany();
     const hoy = hoyMedianoche();
     const timestampEnvio = timestampLegible();
     const slaBase = typeof slaBaseDias === "number" && slaBaseDias > 0 ? slaBaseDias : slaBasePorPrioridad(prioridad);

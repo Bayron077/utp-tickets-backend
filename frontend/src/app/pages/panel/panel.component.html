@@ -283,10 +283,10 @@
 
 <!-- MODAL ENVÍO MASIVO -->
 <div class="modal-overlay" *ngIf="modalMasivoAbierto">
-  <div class="modal-card" style="max-width:500px">
+  <div class="modal-card" style="max-width:560px">
     <div class="modal-header">
       <div>
-        <div class="modal-title">📢 Envío masivo a todas las facultades</div>
+        <div class="modal-title">📢 Envío masivo</div>
         <div class="modal-sub">Se creará un ticket y se notificará a cada director (con copia a Dirección de Posgrados, Vicerrectoría Académica y el decano de cada facultad)</div>
       </div>
       <button class="modal-close" (click)="cerrarMasivo()">×</button>
@@ -318,16 +318,47 @@
       </div>
       <div class="field">
         <label>Detalle de la solicitud</label>
-        <textarea [(ngModel)]="masivoDetalle" maxlength="3000" placeholder="Describa qué información necesita de todas las facultades..."></textarea>
+        <textarea [(ngModel)]="masivoDetalle" maxlength="3000" placeholder="Describa qué información necesita..."></textarea>
         <div class="char-count">{{ masivoDetalle.length }} / 3000</div>
       </div>
+
+      <div class="field">
+        <label>Destinatarios</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="masivoModo" [value]="true" [(ngModel)]="masivoModoTodos">
+            Enviar a todos los programas
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="masivoModo" [value]="false" [(ngModel)]="masivoModoTodos">
+            Elegir programas específicos
+          </label>
+        </div>
+      </div>
+
+      <div class="field" *ngIf="!masivoModoTodos">
+        <label>Programas destino ({{ masivoProgramasSeleccionados.length }} seleccionados)</label>
+        <div class="programas-selector">
+          <div class="facultad-grupo" *ngFor="let grupo of facultadesMasivo">
+            <label class="facultad-check">
+              <input type="checkbox" [checked]="isMasivoFacultadCompleta(grupo.facultad)" (change)="toggleMasivoFacultad(grupo.facultad)">
+              <strong>{{ grupo.facultad }}</strong>
+            </label>
+            <label class="programa-check" *ngFor="let p of grupo.programas">
+              <input type="checkbox" [checked]="isMasivoProgramaSeleccionado(p.programa)" (change)="toggleMasivoPrograma(p.programa)">
+              {{ p.programa }}
+            </label>
+          </div>
+        </div>
+      </div>
+
       <div class="warn-box">
-        ⚠️ Esta acción creará <strong>un ticket por cada director</strong> y enviará un correo a todos (con las copias configuradas).
+        ⚠️ Esta acción creará <strong>un ticket por cada director</strong> de los programas {{ masivoModoTodos ? 'registrados' : 'seleccionados' }} y enviará un correo a todos (con las copias configuradas).
       </div>
       <div class="modal-actions">
         <button class="btn-secondary" (click)="cerrarMasivo()">Cancelar</button>
         <button class="btn-primary-blue" [disabled]="enviandoMasivo" (click)="confirmarMasivo()">
-          {{ enviandoMasivo ? 'Enviando...' : '📢 Enviar a todas las facultades' }}
+          {{ enviandoMasivo ? 'Enviando...' : (masivoModoTodos ? '📢 Enviar a todos los programas' : '📢 Enviar a los seleccionados') }}
         </button>
       </div>
     </div>

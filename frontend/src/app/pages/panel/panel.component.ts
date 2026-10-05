@@ -52,6 +52,8 @@ export class PanelComponent implements OnInit {
   // modal envío masivo
   modalMasivoAbierto = false;
   masivoTipo = ''; masivoPrioridad = 'Media'; masivoSolicitante = 'Agencia'; masivoDetalle = '';
+  masivoModoTodos = true;
+  masivoProgramasSeleccionados: string[] = [];
   enviandoMasivo = false;
 
   // modal exportar Excel
@@ -293,6 +295,8 @@ export class PanelComponent implements OnInit {
   cerrarMasivo(): void {
     this.modalMasivoAbierto = false;
     this.masivoTipo = ''; this.masivoDetalle = '';
+    this.masivoModoTodos = true;
+    this.masivoProgramasSeleccionados = [];
     this.enviandoMasivo = false;
   }
 
@@ -305,15 +309,58 @@ export class PanelComponent implements OnInit {
     }
   }
 
+  // facultades y sus programas, para el selector agrupado del envío masivo
+  get facultadesMasivo(): { facultad: string; programas: Programa[] }[] {
+    const grupos = new Map<string, Programa[]>();
+    for (const p of this.programasData) {
+      const lista = grupos.get(p.facultad) || [];
+      lista.push(p);
+      grupos.set(p.facultad, lista);
+    }
+    return [...grupos.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([facultad, programas]) => ({ facultad, programas }));
+  }
+
+  isMasivoProgramaSeleccionado(programa: string): boolean {
+    return this.masivoProgramasSeleccionados.includes(programa);
+  }
+
+  toggleMasivoPrograma(programa: string): void {
+    const i = this.masivoProgramasSeleccionados.indexOf(programa);
+    if (i >= 0) this.masivoProgramasSeleccionados.splice(i, 1);
+    else this.masivoProgramasSeleccionados.push(programa);
+  }
+
+  toggleMasivoFacultad(facultad: string): void {
+    const programas = this.programasData.filter(p => p.facultad === facultad).map(p => p.programa);
+    const todosMarcados = programas.every(p => this.isMasivoProgramaSeleccionado(p));
+    if (todosMarcados) {
+      this.masivoProgramasSeleccionados = this.masivoProgramasSeleccionados.filter(p => !programas.includes(p));
+    } else {
+      this.masivoProgramasSeleccionados = [...new Set([...this.masivoProgramasSeleccionados, ...programas])];
+    }
+  }
+
+  isMasivoFacultadCompleta(facultad: string): boolean {
+    const programas = this.programasData.filter(p => p.facultad === facultad).map(p => p.programa);
+    return programas.length > 0 && programas.every(p => this.isMasivoProgramaSeleccionado(p));
+  }
+
   confirmarMasivo(): void {
     if (!this.masivoTipo) { alert('Selecciona el tipo de solicitud.'); return; }
     if (!this.masivoDetalle.trim()) { alert('El detalle no puede estar vacío.'); return; }
+    if (!this.masivoModoTodos && this.masivoProgramasSeleccionados.length === 0) {
+      alert('Selecciona al menos un programa, o elige la opción "Enviar a todos los programas".');
+      return;
+    }
 
     const tipoObj = this.tiposData.find(t => t.tipo === this.masivoTipo);
     this.enviandoMasivo = true;
     this.ticketService.envioMasivo({
       tipo: this.masivoTipo, detalle: this.masivoDetalle.trim(), prioridad: this.masivoPrioridad,
       solicitadoPor: this.masivoSolicitante, slaBaseDias: tipoObj?.dias ?? null,
+      programas: this.masivoModoTodos ? undefined : this.masivoProgramasSeleccionados,
     }).subscribe({
       next: (r) => {
         this.cerrarMasivo();
