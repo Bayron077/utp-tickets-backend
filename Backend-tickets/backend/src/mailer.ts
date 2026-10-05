@@ -93,6 +93,20 @@ interface BuildEmailParams {
   masivo?: boolean;
 }
 
+/** Escapa HTML y convierte texto plano a párrafos/saltos de línea seguros para el correo. */
+function textoAHtml(texto: string): string {
+  const escapado = texto
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  return escapado
+    .split(/\n\s*\n/) // línea en blanco = párrafo nuevo
+    .map(parrafo => parrafo.trim().replace(/\n/g, "<br>"))
+    .filter(parrafo => parrafo.length > 0)
+    .map(parrafo => `<p style="margin:0 0 10px;text-align:justify">${parrafo}</p>`)
+    .join("");
+}
+
 /** Réplica exacta (mismo HTML/diseño) de buildEmail() del Codigo.gs original */
 export function buildEmail(p: BuildEmailParams): string {
   const cfg: Record<TipoCorreo, { color: string; titulo: string; icono: string; urgencia: string | null }> = {
@@ -137,6 +151,7 @@ export function buildEmail(p: BuildEmailParams): string {
     td.label{font-weight:600;color:#475569;background:#f8fafc;width:38%}
     .vencido-row td{background:#fff5f5;color:#c0392b;font-weight:600}
     .detalle-row td:last-child{background:#fffbeb;font-style:italic}
+    .detalle-row td:last-child p:last-child{margin-bottom:0}
     .btn-wrap{text-align:center;margin:24px 0 8px}
     .btn{display:inline-block;background:#ff6a00;color:#fff;padding:15px 40px;text-decoration:none;border-radius:8px;font-size:16px;font-weight:800;letter-spacing:.3px;box-shadow:0 4px 14px rgba(255,106,0,.45);border:2px solid #e65f00}
     .footer{color:#94a3b8;font-size:11px;text-align:center;padding:0 28px 24px;line-height:1.6}
@@ -160,7 +175,7 @@ export function buildEmail(p: BuildEmailParams): string {
         </tr>
         <tr class="detalle-row">
           <td class="label" style="vertical-align:top">Información solicitada</td>
-          <td>${p.detalle}</td>
+          <td>${textoAHtml(p.detalle)}</td>
         </tr>
       </table>
       <div class="btn-wrap">
