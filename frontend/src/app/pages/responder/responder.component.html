@@ -79,6 +79,14 @@
             </div>
           </div>
           <div class="campo-grupo">
+            <label>Tipo de fecha</label>
+            <select [(ngModel)]="tipoFecha">
+              <option value="" disabled selected>Seleccione una opción...</option>
+              <option value="Definitiva">Definitiva</option>
+              <option value="Tentativa">Tentativa</option>
+            </select>
+          </div>
+          <div class="campo-grupo">
             <label>Fecha de inicio</label>
             <input type="date" [(ngModel)]="fechaInicio" />
           </div>
