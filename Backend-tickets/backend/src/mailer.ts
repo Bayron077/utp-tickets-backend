@@ -138,7 +138,7 @@ export function buildEmail(p: BuildEmailParams): string {
     .vencido-row td{background:#fff5f5;color:#c0392b;font-weight:600}
     .detalle-row td:last-child{background:#fffbeb;font-style:italic}
     .btn-wrap{text-align:center;margin:24px 0 8px}
-    .btn{display:inline-block;background:${color};color:#fff;padding:14px 36px;text-decoration:none;border-radius:8px;font-size:15px;font-weight:700;letter-spacing:.3px}
+    .btn{display:inline-block;background:#ff6a00;color:#fff;padding:15px 40px;text-decoration:none;border-radius:8px;font-size:16px;font-weight:800;letter-spacing:.3px;box-shadow:0 4px 14px rgba(255,106,0,.45);border:2px solid #e65f00}
     .footer{color:#94a3b8;font-size:11px;text-align:center;padding:0 28px 24px;line-height:1.6}
   </style>
   </head><body>
