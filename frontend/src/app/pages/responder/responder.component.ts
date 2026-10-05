@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { TicketService } from '../../services/ticket.service';
 import { TicketDetalle } from '../../models/ticket.model';
+import { parrafos } from '../../shared/texto.util';
 
 @Component({
   selector: 'app-responder',
@@ -36,6 +37,10 @@ export class ResponderComponent implements OnInit {
 
   get esInscripciones(): boolean {
     return (this.ticket?.tipo || '').trim().toLowerCase() === 'fechas inscripción';
+  }
+
+  get detalleParrafos(): string[] {
+    return parrafos(this.ticket?.detalle);
   }
 
   private formatearFechaInput(valor: string): string {

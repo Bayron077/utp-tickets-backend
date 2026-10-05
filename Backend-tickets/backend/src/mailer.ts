@@ -93,7 +93,12 @@ interface BuildEmailParams {
   masivo?: boolean;
 }
 
-/** Escapa HTML y convierte texto plano a párrafos/saltos de línea seguros para el correo. */
+/**
+ * Escapa HTML y convierte texto plano a párrafos justificados para el correo.
+ * Solo una línea en blanco (\n\n) separa párrafos; los saltos de línea sueltos
+ * dentro de un párrafo (típicos al pegar texto desde Word/Docs) se tratan como
+ * espacio para que el texto fluya y se justifique en todo el ancho disponible.
+ */
 function textoAHtml(texto: string): string {
   const escapado = texto
     .replace(/&/g, "&amp;")
@@ -101,7 +106,7 @@ function textoAHtml(texto: string): string {
     .replace(/>/g, "&gt;");
   return escapado
     .split(/\n\s*\n/) // línea en blanco = párrafo nuevo
-    .map(parrafo => parrafo.trim().replace(/\n/g, "<br>"))
+    .map(parrafo => parrafo.replace(/\s*\n\s*/g, " ").trim())
     .filter(parrafo => parrafo.length > 0)
     .map(parrafo => `<p style="margin:0 0 10px;text-align:justify">${parrafo}</p>`)
     .join("");

@@ -44,7 +44,8 @@
 
 .detalle-box { background: #f8fafc; border: 1px solid var(--border); border-left: 3px solid var(--blue-lt); border-radius: 6px; padding: 14px 16px; margin-bottom: 6px; }
 .detalle-box label { font-size: 10px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; display: block; margin-bottom: 6px; }
-.detalle-box p { font-size: 14px; color: #334155; line-height: 1.6; margin: 0; text-align: justify; white-space: pre-line; }
+.detalle-box p { font-size: 14px; color: #334155; line-height: 1.6; margin: 0 0 10px; text-align: justify; }
+.detalle-box p:last-child { margin-bottom: 0; }
 
 .divider { border: none; border-top: 1px solid var(--border); }
 
