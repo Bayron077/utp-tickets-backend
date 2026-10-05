@@ -26,7 +26,6 @@ export class ResponderComponent implements OnInit {
   enviando = false;
 
   // Formulario estructurado para el tipo "Estado inscripciones"
-  tipoFecha: '' | 'Fecha tentativa' | 'Fecha de cierre' = '';
   fechaInicio = '';
   fechaFin = '';
 
@@ -80,11 +79,10 @@ export class ResponderComponent implements OnInit {
     let textoRespuesta = this.respuesta.trim();
 
     if (this.esInscripciones) {
-      if (!this.tipoFecha) { alert('Por favor seleccione una opción: "Fecha tentativa" o "Fecha de cierre".'); return; }
       if (!this.fechaInicio || !this.fechaFin) { alert('Por favor seleccione la fecha de inicio y la fecha de cierre.'); return; }
       if (this.fechaFin < this.fechaInicio) { alert('La fecha de cierre no puede ser anterior a la fecha de inicio.'); return; }
 
-      textoRespuesta = `${this.tipoFecha}\nFecha de inicio: ${this.formatearFechaInput(this.fechaInicio)}\nFecha de cierre: ${this.formatearFechaInput(this.fechaFin)}`;
+      textoRespuesta = `Fecha de inicio: ${this.formatearFechaInput(this.fechaInicio)}\nFecha de cierre: ${this.formatearFechaInput(this.fechaFin)}`;
     } else if (!textoRespuesta) {
       alert('Por favor escriba una respuesta antes de enviar.');
       return;

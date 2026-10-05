@@ -72,12 +72,11 @@
         <!-- Formulario estructurado: Estado inscripciones -->
         <ng-container *ngIf="esInscripciones">
           <div class="campo-grupo">
-            <label>Tipo de fecha</label>
-            <select [(ngModel)]="tipoFecha">
-              <option value="" disabled selected>Seleccione una opción...</option>
-              <option value="Fecha tentativa">Fecha tentativa</option>
-              <option value="Fecha de cierre">Fecha de cierre</option>
-            </select>
+            <label>Observación</label>
+            <div class="observacion-fija">
+              Si el programa no abrirá inscripciones durante el segundo semestre de 2026, por favor indique la fecha
+              prevista o tentativa para 2027, aun cuando esta pueda modificarse posteriormente.
+            </div>
           </div>
           <div class="campo-grupo">
             <label>Fecha de inicio</label>

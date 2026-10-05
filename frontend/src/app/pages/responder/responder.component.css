@@ -60,6 +60,7 @@ textarea:focus { border-color: var(--blue-lt); box-shadow: 0 0 0 3px rgba(41,98,
 .campo-grupo label { display: block; font-size: 12px; font-weight: 700; color: var(--gray); text-transform: uppercase; letter-spacing: .4px; margin-bottom: 5px; }
 .campo-grupo select, .campo-grupo input[type="date"] { width: 100%; padding: 12px 14px; border: 1.5px solid var(--border); border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; color: #1e293b; outline: none; box-sizing: border-box; background: #fff; }
 .campo-grupo select:focus, .campo-grupo input[type="date"]:focus { border-color: var(--blue-lt); box-shadow: 0 0 0 3px rgba(41,98,197,.1); }
+.observacion-fija { background: #fff8e1; border: 1px solid #fef3c7; border-radius: 8px; padding: 12px 14px; font-size: 13px; color: #92400e; line-height: 1.5; text-align: justify; }
 
 .btn-submit { width: 100%; margin-top: 16px; padding: 14px; border: none; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 .btn-submit.normal  { background: var(--blue);  color: #fff; }
